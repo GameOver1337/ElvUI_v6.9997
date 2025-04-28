@@ -4,13 +4,43 @@ local S = E:GetModule('Skins')
 local function LoadSkin()
 	if E.private.skins.blizzard.enable ~= true or E.private.skins.blizzard.pvp ~= true then return end
 	
-	PVPUIFrame:StripTextures()
-	PVPUIFrame:SetTemplate("Transparent")
+	-- Главное окно PVP
+	if PVPUIFrame then
+		PVPUIFrame:StripTextures()
+		PVPUIFrame:SetTemplate("Transparent")
+		if PVPUIFrameCloseButton then
+			S:HandleCloseButton(PVPUIFrameCloseButton)
+		end
+		-- Вкладки PVP
+		for i = 1, 2 do
+			local tab = _G["PVPUIFrameTab"..i]
+			if tab then
+				S:HandleTab(tab)
+			end
+		end
+		-- Кнопки категорий
+		for i = 1, 4 do
+			local button = _G["PVPQueueFrameCategoryButton"..i]
+			if button then
+				button:SetTemplate('Default')
+				if button.Background then button.Background:Kill() end
+				if button.Ring then button.Ring:Kill() end
+				if button.Icon then
+					button.Icon:Size(45)
+					button.Icon:SetTexCoord(.15, .85, .15, .85)
+					button:CreateBackdrop("Default")
+					button.backdrop:SetOutside(button.Icon)
+					button.backdrop:SetFrameLevel(button:GetFrameLevel())
+					button.Icon:SetParent(button.backdrop)
+				end
+				button:StyleButton(nil, true)
+			end
+		end
+	end
+	
 	PVPUIFrame.LeftInset:StripTextures()
 	--PVPUIFrame.LeftInset:SetTemplate("Transparent")
 	PVPUIFrame.Shadows:StripTextures()
-	
-	S:HandleCloseButton(PVPUIFrameCloseButton)
 	
 	for i=1, 2 do
 		S:HandleTab(_G["PVPUIFrameTab"..i])
