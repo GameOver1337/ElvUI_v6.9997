@@ -3,6 +3,23 @@ local S = E:GetModule('Skins')
 
 local function LoadSkin()
 	if E.private.skins.blizzard.enable ~= true or E.private.skins.blizzard.mounts ~= true then return end
+
+	-- Главное окно коллекций
+	if CollectionsJournal then
+		CollectionsJournal:StripTextures()
+		CollectionsJournal:SetTemplate('Transparent')
+		if CollectionsJournalCloseButton then
+			S:HandleCloseButton(CollectionsJournalCloseButton)
+		end
+		-- Вкладки коллекций
+		for i = 1, 5 do
+			local tab = _G["CollectionsJournalTab"..i]
+			if tab then
+				S:HandleTab(tab)
+			end
+		end
+	end
+
 	-- global
 	PetJournalParent:StripTextures()
 	PetJournalParent:SetTemplate('Transparent')
@@ -216,4 +233,4 @@ local function LoadSkin()
 	PetJournalPetCardXPBar:SetStatusBarTexture(E.media.normTex)
 end
 
-S:RegisterSkin("Blizzard_PetJournal", LoadSkin)
+S:RegisterSkin("Blizzard_Collections", LoadSkin)

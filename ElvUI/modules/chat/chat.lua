@@ -13,6 +13,32 @@ local cvars = {
 	["whisperMode"] = true,
 }
 
+-- Faction Icon Constants
+local CHANNEL_ICON_NONE = 0
+local CHANNEL_ICON_ALLIANCE = 1
+local CHANNEL_ICON_HORDE = 2
+local CHANNEL_ICON_NEUTRAL = 3
+
+-- Race to Faction mapping
+local allianceRaces = {
+	["Human"] = true,
+	["Dwarf"] = true,
+	["NightElf"] = true,
+	["Gnome"] = true,
+	["Draenei"] = true,
+	["Worgen"] = true,
+	["WorgenAlt"] = true,
+}
+
+local hordeRaces = {
+	["Orc"] = true,
+	["Scourge"] = true,
+	["Tauren"] = true,
+	["Troll"] = true,
+	["BloodElf"] = true,
+	["Goblin"] = true,
+}
+
 local len, gsub, find, sub, gmatch, format, random = string.len, string.gsub, string.find, string.sub, string.gmatch, string.format, math.random
 local tinsert, tremove, tsort, twipe, tconcat = table.insert, table.remove, table.sort, table.wipe, table.concat
 
@@ -801,7 +827,6 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 			if ( arg1 == "WRONG_PASSWORD" ) then
 				local staticPopup = _G[StaticPopup_Visible("CHAT_CHANNEL_PASSWORD") or ""];
 				if ( staticPopup and strupper(staticPopup.data) == strupper(arg9) ) then
-					-- Don't display invalid password messages if we're going to prompt for a password (bug 102312)
 					return;
 				end
 			end
@@ -809,7 +834,6 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 			local found = 0;
 			for index, value in pairs(self.channelList) do
 				if ( channelLength > strlen(value) ) then
-					-- arg9 is the channel name without the number in front...
 					if ( ((arg7 > 0) and (self.zoneChannelList[index] == arg7)) or (strupper(value) == strupper(arg9)) ) then
 						found = 1;
 						infoType = "CHANNEL"..arg8;
@@ -859,12 +883,10 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 		end
 		
 		if (self.privateMessageList) then
-			-- Dedicated BN whisper windows need online/offline messages for only that player
 			if ( (chatGroup == "BN_INLINE_TOAST_ALERT" or chatGroup == "BN_WHISPER_PLAYER_OFFLINE") and not self.privateMessageList[strlower(arg2)] ) then
 				return true;
 			end
 			
-			-- HACK to put certain system messages into dedicated whisper windows
 			if ( chatGroup == "SYSTEM") then
 				local matchFound = false;
 				local message = strlower(arg1);
@@ -918,7 +940,6 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 			globalString = CH:ConcatenateTimeStamp(globalstring);
 			
 			if(strlen(arg5) > 0) then
-				-- TWO users in this notice (E.G. x kicked y)
 				self:AddMessage(format(globalstring, arg8, arg4, arg2, arg5), info.r, info.g, info.b, info.id);
 			elseif ( arg1 == "INVITE" ) then
 				self:AddMessage(format(globalstring, arg4, arg2), info.r, info.g, info.b, info.id);
@@ -995,24 +1016,21 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 			local _, fontHeight = FCF_GetChatWindowInfo(self:GetID());
 			
 			if ( fontHeight == 0 ) then
-				--fontHeight will be 0 if it's still at the default (14)
 				fontHeight = 14;
 			end
 			
-			-- Add AFK/DND flags
-			local pflag;
+			local pflag = "";
 			if(strlen(arg6) > 0) then
 				if ( arg6 == "GM" ) then
-					--If it was a whisper, dispatch it to the GMChat addon.
 					if ( type == "WHISPER" ) then
 						return;
 					end
-					--Add Blizzard Icon, this was sent by a GM
 					pflag = "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t ";
 				elseif ( arg6 == "DEV" ) then
-					--Add Blizzard Icon, this was sent by a Dev
 					pflag = "|TInterface\\ChatFrame\\UI-ChatIcon-Blizz:12:20:0:0:32:16:4:28:0:16|t ";
-				else					
+				elseif ( arg6 == "DND" or arg6 == "AFK" ) then
+					pflag = (pflag or "").._G["CHAT_FLAG_"..arg6];
+				else
 					pflag = _G["CHAT_FLAG_"..arg6];
 				end
 			else
@@ -1027,7 +1045,7 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 				end
 				
 				if(pflag == true) then
-					pflag = nil
+					pflag = ""
 				end
 				
 				if(not pflag and lfgRoles[arg2] and (type == "PARTY_LEADER" or type == "PARTY" or type == "RAID" or type == "RAID_LEADER" or type == "INSTANCE_CHAT" or type == "INSTANCE_CHAT_LEADER")) then
@@ -1037,12 +1055,51 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 				pflag = pflag or ""
 			end
 
+			-- Add faction icon if needed
+			if (arg9 and strlen(arg9) > 0 and strlen(pflag) == 0 and arg12 and strlen(arg12) > 0) then
+				local channelName = strlower(arg9)
+	
+				if (channelName == "world" or channelName == "world_ru" or channelName == "english" or
+					channelName == "world_en" or channelName == "world_cn" or channelName == "world_es") then
+					local race, _, playerName = select(4, GetPlayerInfoByGUID(arg12))
+	
+					if (playerName and strlen(playerName) > 0) then
+						local faction = UnitFactionGroup(playerName)
+						local selectedIcon = CHANNEL_ICON_NONE
+	
+						if (faction == "Alliance") then
+							selectedIcon = CHANNEL_ICON_ALLIANCE
+						elseif (faction == "Horde") then
+							selectedIcon = CHANNEL_ICON_HORDE
+						elseif (faction == "Neutral") then
+							selectedIcon = CHANNEL_ICON_NONE
+						else
+							if (race == "Pandaren") then
+								selectedIcon = CHANNEL_ICON_NEUTRAL
+							elseif (race == "Human" or race == "Dwarf" or race == "NightElf" or race == "Gnome" or race == "Draenei" or race == "Worgen" or race == "WorgenAlt") then
+								selectedIcon = CHANNEL_ICON_ALLIANCE
+							else
+								selectedIcon = CHANNEL_ICON_HORDE
+							end
+						end
+	
+						if (selectedIcon == CHANNEL_ICON_ALLIANCE) then
+							pflag = "|TInterface\\Timer\\alliance-logo:14:14:-1:0:64:64:14:50:4:60|t"
+						elseif (selectedIcon == CHANNEL_ICON_HORDE) then
+							pflag = "|TInterface\\Timer\\horde-logo:14:14:-1:0:64:64:14:50:4:60|t"
+						elseif (selectedIcon == CHANNEL_ICON_NEUTRAL) then
+							pflag = "|TInterface\\Timer\\panda-logo:14:14:-1:0:64:64:14:50:4:60|t"
+						end
+					end
+				end
+			end
+
 			if ( type == "WHISPER_INFORM" and GMChatFrame_IsGM and GMChatFrame_IsGM(arg2) ) then
 				return;
 			end
 
 			local showLink = 1;
-			if ( strsub(type, 1, 7) == "MONSTER" or strsub(type, 1, 9) == "RAID_BOSS") then
+			if ( strsub(type, 1, 7) == "MONSTER" or strsub(type, 1, 9) == "RAID_BOSS" ) then
 				showLink = nil;
 			else
 				arg1 = gsub(arg1, "%%", "%%%%");
@@ -1091,24 +1148,24 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 			if ( (strlen(arg3) > 0) and (arg3 ~= self.defaultLanguage) ) then
 				local languageHeader = "["..arg3.."] ";
 				if ( showLink and (strlen(arg2) > 0) ) then
-					body = format(_G["CHAT_"..type.."_GET"]..languageHeader..message, pflag..playerLink.."["..coloredName.."]".."|h");
+					body = format(_G["CHAT_"..type.."_GET"]..languageHeader..message, (pflag ~= "" and pflag or "")..playerLink.."["..coloredName.."]|h");
 				else
-					body = format(_G["CHAT_"..type.."_GET"]..languageHeader..message, pflag..arg2);
+					body = format(_G["CHAT_"..type.."_GET"]..languageHeader..message, (pflag ~= "" and pflag or "")..arg2);
 				end
 			else
 				if ( not showLink or strlen(arg2) == 0 ) then
 					if ( type == "TEXT_EMOTE" ) then
 						body = message;
 					else
-						body = format(_G["CHAT_"..type.."_GET"]..message, pflag..arg2, arg2);
+						body = format(_G["CHAT_"..type.."_GET"]..message, (pflag ~= "" and pflag or "")..arg2, arg2);
 					end
 				else
 					if ( type == "EMOTE" ) then
-						body = format(_G["CHAT_"..type.."_GET"]..message, pflag..playerLink..coloredName.."|h");
+						body = format(_G["CHAT_"..type.."_GET"]..message, (pflag ~= "" and pflag or "")..playerLink.."["..coloredName.."]|h");
 					elseif ( type == "TEXT_EMOTE") then
-						body = gsub(message, arg2, pflag..playerLink..coloredName.."|h", 1);
+						body = gsub(message, arg2, (pflag ~= "" and pflag or "")..playerLink.."["..coloredName.."]|h", 1);
 					else
-						body = format(_G["CHAT_"..type.."_GET"]..message, pflag..playerLink.."["..coloredName.."]".."|h");
+						body = format(_G["CHAT_"..type.."_GET"]..message, (pflag ~= "" and pflag or "")..playerLink.."["..coloredName.."]|h");
 					end
 				end
 			end
@@ -1138,21 +1195,18 @@ function CH:ChatFrame_MessageEventHandler(event, ...)
 		end
  
 		if ( type == "WHISPER" or type == "BN_WHISPER" ) then
-			--BN_WHISPER FIXME
 			ChatEdit_SetLastTellTarget(arg2, type);
 			if ( self.tellTimer and (GetTime() > self.tellTimer) ) then
-				PlaySound("TellMessage");
+					PlaySound("TellMessage");
 			end
 			self.tellTimer = GetTime() + CHAT_TELL_ALERT_TIME;
-			--FCF_FlashTab(self);
 		end
 		
 		if ( not self:IsShown() ) then
 			if ( (self == DEFAULT_CHAT_FRAME and info.flashTabOnGeneral) or (self ~= DEFAULT_CHAT_FRAME and info.flashTab) ) then
-				if ( not CHAT_OPTIONS.HIDE_FRAME_ALERTS or type == "WHISPER" or type == "BN_WHISPER" ) then	--BN_WHISPER FIXME
+				if ( not CHAT_OPTIONS.HIDE_FRAME_ALERTS or type == "WHISPER" or type == "BN_WHISPER" ) then
 					if (not (type == "BN_CONVERSATION" and BNIsSelf(arg13))) then
 						if (not FCFManager_ShouldSuppressMessageFlash(self, chatGroup, chatTarget) ) then
-							--FCF_StartAlertFlash(self); THIS TAINTS<<<<<<<
 							_G[self:GetName().."Tab"].glow:Show()
 							_G[self:GetName().."Tab"]:SetScript("OnUpdate", CH.ChatTab_OnUpdate)
 						end

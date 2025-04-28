@@ -7,18 +7,26 @@ WatchFrameHolder:SetHeight(22)
 WatchFrameHolder:SetPoint('TOPRIGHT', E.UIParent, 'TOPRIGHT', -135, -300)
 
 function B:MoveWatchFrame()
-	E:CreateMover(WatchFrameHolder, 'WatchFrameMover', L['Watch Frame'])
-	WatchFrameHolder:SetAllPoints(WatchFrameMover)
+    if not WatchFrame then return end -- Проверяем, что WatchFrame существует
 
-	
-	WatchFrame:ClearAllPoints()
-	WatchFrame:SetPoint('TOP', WatchFrameHolder, 'TOP')
-	WatchFrame:Height(E.screenheight / 2)
-	WatchFrame:SetClampedToScreen(false)
-	hooksecurefunc(WatchFrame,"SetPoint",function(_,_,parent)
-		if parent ~= WatchFrameHolder then
-			WatchFrame:ClearAllPoints()
-			WatchFrame:SetPoint('TOP', WatchFrameHolder, 'TOP')
-		end
-	end)	
+    E:CreateMover(WatchFrameHolder, 'WatchFrameMover', "Objectives Frame") -- Явно указываем название
+    WatchFrameHolder:SetAllPoints(WatchFrameMover)
+
+    WatchFrame:ClearAllPoints()
+    WatchFrame:SetPoint('TOP', WatchFrameHolder, 'TOP')
+    WatchFrame:Height(E.screenheight / 2)
+    WatchFrame:SetClampedToScreen(false)
+    hooksecurefunc(WatchFrame,"SetPoint",function(_,_,parent)
+        if parent ~= WatchFrameHolder then
+            WatchFrame:ClearAllPoints()
+            WatchFrame:SetPoint('TOP', WatchFrameHolder, 'TOP')
+        end
+    end)	
 end
+
+-- Гарантируем вызов после полной загрузки интерфейса
+local f = CreateFrame("Frame")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:SetScript("OnEvent", function()
+    B:MoveWatchFrame()
+end)
