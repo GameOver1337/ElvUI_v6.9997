@@ -13,6 +13,32 @@ local cvars = {
 	["whisperMode"] = true,
 }
 
+local function Icon(link)
+    if link:find("item:") then
+        local itemName, itemLink, quality, _, _, _, _, _, _, texture, level = GetItemInfo(link)
+        if not itemName then return link end -- Return original link if item info not available
+        
+        local color = "|c" .. select(4, GetItemQualityColor(quality)) or ""
+        
+        return color .. "\124T" .. texture .. ":" .. 20 .. "\124t" .. link .. "|r"
+    elseif link:find("currency:") then
+        local currencyID = link:match("currency:(%d+)")
+        if currencyID then
+            local name, amount, icon = GetCurrencyInfo(currencyID)
+            if name then
+                return "\124T" .. icon .. ":" .. 20 .. "\124t" .. link .. "|r"
+            end
+        end
+    end
+    return link
+end
+
+local function AddLootIcons(self, event, message, ...)
+    message = message:gsub("(\124c%x+\124Hitem:.-\124h\124r)", Icon)
+    message = message:gsub("(\124c%x+\124Hcurrency:.-\124h\124r)", Icon)
+    return false, message, ...
+end
+
 -- Faction Icon Constants
 local CHANNEL_ICON_NONE = 0
 local CHANNEL_ICON_ALLIANCE = 1
@@ -1827,6 +1853,41 @@ function CH:Initialize()
 
  	CombatLogQuickButtonFrame_CustomAdditionalFilterButton:Size(20, 22)
  	CombatLogQuickButtonFrame_CustomAdditionalFilterButton:Point("TOPRIGHT", CombatLogQuickButtonFrame_Custom, "TOPRIGHT", 0, -1)
+
+	local channels = {
+		"CHAT_MSG_YELL",
+		"CHAT_MSG_WHISPER",
+		"CHAT_MSG_OFFICER",
+		"CHAT_MSG_SAY",
+		"CHAT_MSG_GUILD",
+		"CHAT_MSG_PARTY",
+		"CHAT_MSG_PARTY_LEADER",
+		"CHAT_MSG_RAID",
+		"CHAT_MSG_RAID_LEADER",
+		"CHAT_MSG_INSTANCE_CHAT",
+		"CHAT_MSG_INSTANCE_CHAT_LEADER",
+		"CHAT_MSG_CHANNEL",
+		"CHAT_MSG_WHISPER_INFORM",
+		"CHAT_MSG_LOOT",
+		"CHAT_MSG_SKILL",
+		"CHAT_MSG_CURRENCY",
+		"CHAT_MSG_BATTLEGROUND",
+		"CHAT_MSG_SYSTEM",
+		"CHAT_MSG_RAID_WARNING"
+	}
+
+	for _, channel in ipairs(channels) do
+		ChatFrame_AddMessageEventFilter(channel, AddLootIcons)
+	end
+
+	GeneralDockManagerOverflowButton:ClearAllPoints()
+	GeneralDockManagerOverflowButton:Point('BOTTOMRIGHT', LeftChatTab, 'BOTTOMRIGHT', -2, 2)
+	GeneralDockManagerOverflowButtonList:SetTemplate('Transparent')
+	hooksecurefunc(GeneralDockManagerScrollFrame, 'SetPoint', function(self, point, anchor, attachTo, x, y)
+		if anchor == GeneralDockManagerOverflowButton and x == 0 and y == 0 then
+			self:SetPoint(point, anchor, attachTo, -2, -6)
+		end
+	end)	
 end
 
 E:RegisterModule(CH:GetName())

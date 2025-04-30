@@ -9,7 +9,7 @@ WatchFrameHolder:SetPoint('TOPRIGHT', E.UIParent, 'TOPRIGHT', -135, -300)
 function B:MoveWatchFrame()
     if not WatchFrame then return end -- Проверяем, что WatchFrame существует
 
-    E:CreateMover(WatchFrameHolder, 'WatchFrameMover', "Objectives Frame") -- Явно указываем название
+    E:CreateMover(WatchFrameHolder, 'WatchFrameMover', L['Watch Frame']) -- Используем перевод
     WatchFrameHolder:SetAllPoints(WatchFrameMover)
 
     WatchFrame:ClearAllPoints()
