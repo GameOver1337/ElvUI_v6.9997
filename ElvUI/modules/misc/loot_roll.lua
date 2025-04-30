@@ -19,7 +19,9 @@ local rolltypes = {[1] = "need", [2] = "greed", [3] = "disenchant", [0] = "pass"
 local function SetTip(frame)
 	GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
 	GameTooltip:SetText(frame.tiptext)
-	if frame:IsEnabled() == 0 then GameTooltip:AddLine("|cffff3333"..L["Can't Roll"]) end
+	if frame:IsEnabled() == 0 then 
+		GameTooltip:AddLine("|cffff3333"..L["Can't Roll"]) 
+	end
 	for name,roll in pairs(frame.parent.rolls) do if rolltypes[roll] == rolltypes[frame.rolltype] then GameTooltip:AddLine(name, 1, 1, 1) end end
 	GameTooltip:Show()
 end
@@ -241,6 +243,31 @@ end
 
 function M:LoadLootRoll()	
 	if not E.private.general.lootRoll then return end
+	
+	-- Создаем фрейм-держатель для рамок ролла
+	local rollFrameHolder = CreateFrame("Frame", "ElvUIRollFrameHolder", E.UIParent)
+	rollFrameHolder:Size(FRAME_WIDTH, FRAME_HEIGHT)
+	rollFrameHolder:Point("TOP", E.UIParent, "TOP", 0, -50)
+	
+	-- Создаем мувер для фрейма-держателя
+	E:CreateMover(rollFrameHolder, "LootRollMover", L["Loot Roll"], nil, nil, nil, "ALL,GENERAL")
+	
+	-- Заменяем функцию GetFrame, чтобы привязать фреймы ролла к нашему держателю
+	local oldGetFrame = GetFrame
+	GetFrame = function()
+		for i,f in ipairs(M.RollBars) do
+			if not f.rollID then return f end
+		end
+		
+		local f = M:CreateRollFrame()
+		if pos == "TOP" then
+			f:Point("TOP", next(M.RollBars) and M.RollBars[#M.RollBars] or rollFrameHolder, next(M.RollBars) and "BOTTOM" or "TOP", 0, next(M.RollBars) and -4 or 0)
+		else
+			f:Point("BOTTOM", next(M.RollBars) and M.RollBars[#M.RollBars] or rollFrameHolder, next(M.RollBars) and "TOP" or "BOTTOM", 0, next(M.RollBars) and 4 or 0)
+		end
+		tinsert(M.RollBars, f)
+		return f
+	end
 	
 	self:RegisterEvent('LOOT_HISTORY_ROLL_CHANGED')
 	self:RegisterEvent("START_LOOT_ROLL")

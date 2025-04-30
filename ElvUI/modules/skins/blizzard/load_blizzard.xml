@@ -54,5 +54,4 @@
 	<Script file='blackmarket.lua'/>
 	<Script file='itemupgrade.lua'/>
 	<Script file='losscontrol.lua'/>
-	<Script file='shop.lua'/>
 </Ui>

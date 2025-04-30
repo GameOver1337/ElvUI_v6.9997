@@ -104,6 +104,7 @@ local function LoadSkin()
 		end
 	end) 
 	
+	-- Скин для BonusRollFrame
 	BonusRollFrame:StripTextures()
 	BonusRollFrame:SetTemplate('Transparent')
 	BonusRollFrame.PromptFrame.Icon:SetTexCoord(unpack(E.TexCoords))
@@ -113,6 +114,23 @@ local function LoadSkin()
 	BonusRollFrame.PromptFrame.IconBackdrop:SetTemplate()	
 	BonusRollFrame.PromptFrame.Timer.Bar:SetTexture(1, 1, 1)
 	BonusRollFrame.PromptFrame.Timer.Bar:SetVertexColor(1, 1, 1)
+	
+	-- Создаем держатель для BonusRollFrame и мувер для него
+	local BRF = CreateFrame("Frame", "ElvUIBonusRollFrameHolder", E.UIParent)
+	BRF:Size(BonusRollFrame:GetWidth(), BonusRollFrame:GetHeight())
+	BRF:Point("CENTER", E.UIParent, "CENTER", 0, 0)
+	BRF:SetFrameStrata("HIGH")
+	BonusRollFrame:ClearAllPoints()
+	BonusRollFrame:SetPoint("CENTER", BRF, "CENTER")
+	BonusRollFrame:SetClampedToScreen(true)
+	BonusRollFrame:SetMovable(true)
+	E:CreateMover(BRF, "BonusRollFrameMover", L["Bonus Roll Frame"], nil, nil, nil, "ALL,GENERAL")
+	
+	-- Хук на появление фрейма, чтобы он всегда появлялся в нужном месте
+	hooksecurefunc("BonusRollFrame_StartBonusRoll", function()
+		BonusRollFrame:ClearAllPoints()
+		BonusRollFrame:SetPoint("CENTER", BRF, "CENTER")
+	end)
 end
 
 S:RegisterSkin("ElvUI", LoadSkin)
