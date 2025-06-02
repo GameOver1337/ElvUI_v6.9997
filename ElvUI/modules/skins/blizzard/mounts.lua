@@ -21,12 +21,14 @@ local function LoadSkin()
 	end
 
 	-- global
-	PetJournalParent:StripTextures()
-	PetJournalParent:SetTemplate('Transparent')
-	PetJournalParentPortrait:Hide()
-	S:HandleTab(PetJournalParentTab1)
-	S:HandleTab(PetJournalParentTab2)
-	S:HandleCloseButton(PetJournalParentCloseButton)
+	if PetJournalParent then
+		PetJournalParent:StripTextures()
+		PetJournalParent:SetTemplate('Transparent')
+		PetJournalParentPortrait:Hide()
+		S:HandleTab(PetJournalParentTab1)
+		S:HandleTab(PetJournalParentTab2)
+		S:HandleCloseButton(PetJournalParentCloseButton)
+	end
 
 	-------------------------------
 	--[[ mount journal (tab 1) ]]--

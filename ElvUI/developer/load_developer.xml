@@ -3,5 +3,4 @@
 	<Script file='frame.lua'/>
 	<Script file='test.lua'/>
 	<Script file='table.lua'/>
-	<Script file='draggable_frame.lua'/>
 </Ui>

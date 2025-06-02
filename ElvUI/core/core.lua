@@ -663,7 +663,7 @@ function E:InitializeInitialModules()
 		if module and module.Initialize then
 			local _, catch = pcall(module.Initialize, module)
 			if catch and GetCVarBool('scriptErrors') == 1 then
-				ScriptErrorsFrame_OnError(catch, false)
+				print("|cffff0000Error:|r "..catch)
 			end
 		end
 	end
@@ -681,7 +681,7 @@ function E:InitializeModules()
 		if module.Initialize then
 			local _, catch = pcall(module.Initialize, module)
 			if catch and GetCVarBool('scriptErrors') == 1 then
-				ScriptErrorsFrame_OnError(catch, false)
+				print("|cffff0000Error:|r "..catch)
 			end
 		end
 	end
@@ -1154,7 +1154,7 @@ function E:Initialize()
 	self:RegisterEvent('UI_SCALE_CHANGED', 'UIScale')
 	self:RegisterEvent('PLAYER_ENTERING_WORLD')
 	self:RegisterEvent("PET_BATTLE_CLOSE", 'AddNonPetBattleFrames')
-	self:RegisterEvent('PET_BATTLE_OPENING_START', "RemoveNonPetBattleFrames")	
+	self:RegisterEvent('PET_BATTLE_OPENING_START', "RemoveNonPetBattleFrames")
 	
 	if self.myclass == "DRUID" then
 		self:RegisterEvent("SPELLS_CHANGED")
