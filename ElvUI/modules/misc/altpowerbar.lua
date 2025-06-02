@@ -88,11 +88,6 @@ function AP:Initialize()
 		AP:ShowAltPowerText()
 	end)
 	
-	-- Also hook status frame creation to ensure text visibility
-	hooksecurefunc(PlayerPowerBarAlt, "SetupStatusBar", function()
-		AP:ShowAltPowerText()
-	end)
-	
 	-- Make the text always visible when power value updates
 	self:RegisterEvent("UNIT_POWER_UPDATE", "ShowAltPowerText")
 	
